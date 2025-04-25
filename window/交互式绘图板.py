@@ -56,16 +56,16 @@ while running:
 
     # 绘图逻辑
     if pygame.mouse.get_pressed()[0]:
-        pos = pygame.mouse.get_pos()
-        points.append((pos, current_color, shape_type))
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        points.append((mouse_x, mouse_y, current_color, shape_type))
 
     # 渲染
     screen.fill((255, 255, 255))
-    for pos, color, shape_type in points:
+    for mouse_x, mouse_y, color, shape_type in points:
         if shape_type == "圆形":
-            pygame.draw.circle(screen, color, pos, 5)
+            pygame.draw.circle(screen, color, (mouse_x, mouse_y), 5)
         if shape_type == "矩形":
-            pygame.draw.rect(screen, color, (pos, 5, 5), 5)
+            pygame.draw.rect(screen, color, (mouse_x, mouse_y, 5, 5), 5)
     pygame.display.flip()
     clock.tick(240)  # 限制帧率
 
