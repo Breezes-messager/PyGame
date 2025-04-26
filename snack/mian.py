@@ -2,154 +2,129 @@ import random
 
 import pygame
 
-# 初始化pygame
 pygame.init()
 
-# 定义颜色
-white = (255, 255, 255)
-black = (0, 0, 0)
-red = (213, 50, 80)
-green = (0, 255, 0)
-blue = (50, 153, 213)
-
-
-
-# 设置显示窗口
-dis_width = 800
-dis_height = 600
-dis = pygame.display.set_mode((dis_width, dis_height))
-pygame.display.set_caption('贪吃蛇游戏 by Python')
-
-# 设置游戏时钟
+# 初始化窗口和变量
+screen = pygame.display.set_mode((800, 600))
 clock = pygame.time.Clock()
+running = True
+game_over = False  # 添加游戏结束状态
+pygame.display.set_caption("简易贪吃蛇")
 
-# 蛇的大小和速度
-snake_block = 10
-snake_speed = 15
+# 颜色定义
+WHITE = (255, 255, 255)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+BLACK = (0, 0, 0)
 
-# 设置字体
-font_style = pygame.font.SysFont("bahnschrift", 25)
-score_font = pygame.font.SysFont("comicsansms", 35)
+# 蛇的初始设置
+snake_size = 20
+snake_speed = 10
+snake_body = [[400, 300]]  # 初始蛇头位置
+snake_direction = 'RIGHT'
+change_to = snake_direction
+
+# 食物设置
+food_pos = [random.randrange(1, (800 // snake_size)) * snake_size,
+            random.randrange(1, (600 // snake_size)) * snake_size]
+food_spawn = True
+
+# 分数
+score = 0
+font = pygame.font.SysFont('arial', 20)
 
 
-# 显示得分
-def your_score(score):
-    value = score_font.render("score: " + str(score), True, black)
-    dis.blit(value, [0, 0])
-
-
-# 绘制蛇
-def our_snake(snake_block, snake_list):
-    for x in snake_list:
-        pygame.draw.rect(dis, green, [x[0], x[1], snake_block, snake_block])
-
-
-# 显示消息
-def message(msg, color):
-    mesg = font_style.render(msg, True, color)
-    dis.blit(mesg, [dis_width / 6, dis_height / 3])
+def show_game_over():
+    go_text = font.render('game over! R regame', True, WHITE)
+    screen.blit(go_text, (300, 300))
 
 
 # 游戏主循环
-def gameLoop():
-    game_over = False
-    game_close = False
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        # 按键控制
+        elif event.type == pygame.KEYDOWN:
+            if not game_over:
+                if event.key == pygame.K_RIGHT and snake_direction != 'LEFT':
+                    change_to = 'RIGHT'
+                elif event.key == pygame.K_LEFT and snake_direction != 'RIGHT':
+                    change_to = 'LEFT'
+                elif event.key == pygame.K_UP and snake_direction != 'DOWN':
+                    change_to = 'UP'
+                elif event.key == pygame.K_DOWN and snake_direction != 'UP':
+                    change_to = 'DOWN'
+            else:
+                if event.key == pygame.K_r:  # 按R键重新开始
+                    game_over = False
+                    snake_body = [[400, 300]]
+                    snake_direction = 'RIGHT'
+                    change_to = snake_direction
+                    score = 0
+                    food_pos = [random.randrange(1, (800 // snake_size)) * snake_size,
+                                random.randrange(1, (600 // snake_size)) * snake_size]
+                    food_spawn = True
 
-    # 初始化蛇的位置
-    x1 = dis_width / 2
-    y1 = dis_height / 2
+    if not game_over:
+        # 更新方向
+        snake_direction = change_to
 
-    # 初始化蛇的移动方向
-    x1_change = 0
-    y1_change = 0
+        # 移动蛇
+        new_head = [snake_body[0][0], snake_body[0][1]]
+        if snake_direction == 'RIGHT':
+            new_head[0] += snake_size
+        elif snake_direction == 'LEFT':
+            new_head[0] -= snake_size
+        elif snake_direction == 'UP':
+            new_head[1] -= snake_size
+        elif snake_direction == 'DOWN':
+            new_head[1] += snake_size
 
-    # 初始化蛇的身体
-    snake_List = []
-    Length_of_snake = 1
+        # 插入新头部
+        snake_body.insert(0, new_head)
 
-    # 随机生成食物位置
-    foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
-    foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
+        # 检测是否吃到食物
+        if snake_body[0][0] == food_pos[0] and snake_body[0][1] == food_pos[1]:
+            score += 1
+            food_spawn = False
+        else:
+            # 如果没有吃到食物，移除尾部
+            snake_body.pop()
 
-    while not game_over:
+        # 生成新食物
+        if not food_spawn:
+            food_pos = [random.randrange(1, (800 // snake_size)) * snake_size,
+                        random.randrange(1, (600 // snake_size)) * snake_size]
+            # 确保食物不会生成在蛇身上
+            while food_pos in snake_body:
+                food_pos = [random.randrange(1, (800 // snake_size)) * snake_size,
+                            random.randrange(1, (600 // snake_size)) * snake_size]
+            food_spawn = True
 
-        while game_close:
-            dis.fill(white)
-            message("game over! Q-quik or C-replay", red)
-            your_score(Length_of_snake - 1)
-            pygame.display.update()
+        # 边界检测和自身碰撞检测
+        if (snake_body[0][0] >= 800 or snake_body[0][0] < 0 or
+                snake_body[0][1] >= 600 or snake_body[0][1] < 0):
+            game_over = True
 
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:
-                        game_over = True
-                        game_close = False
-                    if event.key == pygame.K_c:
-                        gameLoop()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for block in snake_body[1:]:
+            if snake_body[0][0] == block[0] and snake_body[0][1] == block[1]:
                 game_over = True
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    x1_change = -snake_block
-                    y1_change = 0
-                elif event.key == pygame.K_RIGHT:
-                    x1_change = snake_block
-                    y1_change = 0
-                elif event.key == pygame.K_UP:
-                    y1_change = -snake_block
-                    x1_change = 0
-                elif event.key == pygame.K_DOWN:
-                    y1_change = snake_block
-                    x1_change = 0
 
-        # 检查是否撞墙
-        if x1 >= dis_width or x1 < 0 or y1 >= dis_height or y1 < 0:
-            game_close = True
+    # 绘制
+    screen.fill(BLACK)
+    for pos in snake_body:
+        pygame.draw.rect(screen, GREEN, pygame.Rect(pos[0], pos[1], snake_size, snake_size))
+    pygame.draw.rect(screen, RED, pygame.Rect(food_pos[0], food_pos[1], snake_size, snake_size))
 
-        # 更新蛇的位置
-        x1 += x1_change
-        y1 += y1_change
-        dis.fill(white)
+    # 显示分数
+    score_text = font.render(f'score: {score}', True, WHITE)
+    screen.blit(score_text, (10, 10))
 
-        # 绘制食物
-        pygame.draw.rect(dis, red, [foodx, foody, snake_block, snake_block])
+    if game_over:
+        show_game_over()
 
-        # 更新蛇的身体
-        snake_Head = []
-        snake_Head.append(x1)
-        snake_Head.append(y1)
-        snake_List.append(snake_Head)
+    pygame.display.update()
+    clock.tick(snake_speed)
 
-        # 删除多余的蛇身
-        if len(snake_List) > Length_of_snake:
-            del snake_List[0]
-
-        # 检查是否撞到自己
-        for x in snake_List[:-1]:
-            if x == snake_Head:
-                game_close = True
-
-        # 绘制蛇
-        our_snake(snake_block, snake_List)
-        your_score(Length_of_snake - 1)
-
-        pygame.display.update()
-
-        # 检查是否吃到食物
-        if x1 == foodx and y1 == foody:
-            foodx = round(random.randrange(0, dis_width - snake_block) / 10.0) * 10.0
-            foody = round(random.randrange(0, dis_height - snake_block) / 10.0) * 10.0
-            Length_of_snake += 1
-
-        # 控制游戏速度
-        clock.tick(snake_speed)
-
-    # 退出游戏
-    pygame.quit()
-    quit()
-
-
-# 启动游戏
-gameLoop()
+pygame.quit()
