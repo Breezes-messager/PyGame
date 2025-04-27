@@ -12,6 +12,7 @@ running = True
 draw_over = False
 circles = []
 min_distance = 20
+draw = False
 
 
 def is_valid_position(new_pos, existing_positions):
@@ -28,12 +29,16 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:
+                circles = []
+                draw = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()  # 获取点击位置
             print(mouse_pos)
 
             for i, (x, y) in enumerate(circles):
-                distance = math.sqrt((mouse_pos[0] - x) ** 2 + (mouse_pos[1] - y) **2 )
+                distance = math.sqrt((mouse_pos[0] - x) ** 2 + (mouse_pos[1] - y) ** 2)
                 if distance <= 10:
                     print(f"点击到了第 {i + 1} 个圆圈！")
                     circles.pop(i)  # 移除被点击的圆圈
@@ -41,11 +46,14 @@ while running:
 
     # 绘制和逻辑代码
     screen.fill((240, 240, 240))  # 浅灰色背景
-    while len(circles) < 20:
-        new_pos = (random.randint(10, 790), random.randint(10, 590))
-        if is_valid_position(new_pos, circles):
-            circles.append(new_pos)
-
+    while True:
+        if not draw:
+            for i in range(20):
+                new_pos = (random.randint(10, 790), random.randint(10, 590))
+                if is_valid_position(new_pos, circles):
+                    circles.append(new_pos)
+            draw = True
+        break
     # 绘制所有圆圈
     for x, y in circles:
         pygame.draw.circle(screen, (255, 0, 0), (x, y), 10)
